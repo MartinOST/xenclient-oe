@@ -6,7 +6,7 @@ SRC_URI += "file://xenstored.initscript \
 	    file://xenconsoled.initscript \
 "
 
-DEPENDS += " gettext ncurses openssl python zlib seabios ipxe gmp lzo glib-2.0 iasl-native xz "
+DEPENDS += " gettext ncurses openssl python zlib seabios ipxe gmp lzo glib-2.0 iasl-native xz yajl"
 DEPENDS += "util-linux"
 # lzo2 required by libxenguest.
 RDEPENDS_${PN} += " lzo"
@@ -81,6 +81,9 @@ do_compile() {
         oe_runmake -C tools subdir-all-xenstat
         oe_runmake -C tools subdir-all-hvm-info
         oe_runmake -C tools subdir-all-xen-libhvm
+        oe_runmake -C tools subdir-all-libaio
+        oe_runmake -C tools subdir-all-blktap2
+        oe_runmake -C tools subdir-all-libxl
 }
 
 do_install() {
@@ -96,6 +99,8 @@ do_install() {
         oe_runmake DESTDIR=${D} -C tools subdir-install-xenstat
         oe_runmake DESTDIR=${D} -C tools subdir-install-hvm-info
         oe_runmake DESTDIR=${D} -C tools subdir-install-xen-libhvm
+        oe_runmake DESTDIR=${D} -C tools subdir-install-blktap2
+        oe_runmake DESTDIR=${D} -C tools subdir-install-libxl
 
 # Should not be necessary anymore
         rm -rf ${D}/etc/udev
@@ -105,8 +110,8 @@ do_install() {
         rm -f ${D}/etc/xen/scripts/block
 
         install -d ${D}${sysconfdir}/init.d
-	rm -f ${D}/etc/init.d/xencommons
-	rm -f ${D}/etc/init.d/xen-watchdog
+        rm -f ${D}/etc/init.d/xencommons
+        rm -f ${D}/etc/init.d/xen-watchdog
         install -m 0755 ${WORKDIR}/xenstored.initscript ${D}${sysconfdir}/init.d/xenstored
         install -m 0755 ${WORKDIR}/xenconsoled.initscript ${D}${sysconfdir}/init.d/xenconsoled
 }

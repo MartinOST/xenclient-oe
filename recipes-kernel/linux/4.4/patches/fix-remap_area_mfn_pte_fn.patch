@@ -1,0 +1,25 @@
+Index: linux-4.4.6/arch/x86/xen/mmu.c
+===================================================================
+--- linux-4.4.6.orig/arch/x86/xen/mmu.c
++++ linux-4.4.6/arch/x86/xen/mmu.c
+@@ -2791,7 +2791,20 @@ static int remap_area_mfn_pte_fn(pte_t *
+ 				 unsigned long addr, void *data)
+ {
+ 	struct remap_data *rmd = data;
++	
++#ifdef CONFIG_XEN_STUBDOM
++	/* Use the native_make_pte function because we are sure we don't
++	 * have to do any pfn->mfn translations but at the same time we
++	 * could in a stubdom so xen_initial_domain() would return false. */
++	/* Since it is not entirely clear why this *has* to be here, I will
++	 * paste a reference to its origins
++	 * <alpine.DEB.2.00.1111101005140.3519@kaball-desktop>
++	 * http://lists.xen.org/archives/html/xen-devel/2011-11/msg00635.html  */
++	pte_t pte = pte_mkspecial(native_make_pte(((phys_addr_t)(rmd->mfn++) << PAGE_SHIFT) | massage_pgprot(rmd->prot)));
++	pteval_t val = pte_val_ma(pte);
++#else
+ 	pte_t pte = pte_mkspecial(mfn_pte(*rmd->mfn, rmd->prot));
++#endif
+ 
+ 	/* If we have a contigious range, just update the mfn itself,
+ 	   else update pointer to be "next mfn". */
