@@ -125,6 +125,7 @@ SRC_URI = "${XEN_SRC_URI};name=source \
     file://openxt-xen-xsmv4vuse.patch \
     file://xsa-154-x86-inconsistent-cachability-flags-on-guest-mappings.patch \
     file://xsa-182-x86-privilege-escalation-in-pv-guests.patch \
+    file://xl-fix-compile.patch \
     file://linux-stubdomain-add-stubdomain_version-to-domain_build_info.patch \
     file://linux-stubdomain-build-domain-with-linux-based-stubdom.patch \
 "
