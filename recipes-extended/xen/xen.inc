@@ -127,6 +127,7 @@ SRC_URI = "${XEN_SRC_URI};name=source \
     file://xsa-182-x86-privilege-escalation-in-pv-guests.patch \
     file://xl-fix-compile.patch \
     file://linux-stubdomain-add-stubdomain_version-to-domain_build_info.patch \
+    file://linux-stubdomain-handle-stubdom-specific-qemu-options.patch \
     file://linux-stubdomain-build-domain-with-linux-based-stubdom.patch \
 "
 SRC_URI[source.md5sum] := "${XEN_SRC_MD5SUM}"

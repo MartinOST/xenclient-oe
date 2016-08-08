@@ -64,7 +64,7 @@ Index: xen-4.3.4/tools/libxl/libxl_dm.c
 ===================================================================
 --- xen-4.3.4.orig/tools/libxl/libxl_dm.c
 +++ xen-4.3.4/tools/libxl/libxl_dm.c
-@@ -810,6 +810,16 @@ char *libxl__stub_dm_name(libxl__gc *gc,
+@@ -810,6 +812,16 @@ char *libxl__stub_dm_name(libxl__gc *gc,
      return libxl__sprintf(gc, "%s-dm", guest_name);
  }
  
@@ -81,7 +81,7 @@ Index: xen-4.3.4/tools/libxl/libxl_dm.c
  void libxl__spawn_stub_dm(libxl__egc *egc, libxl__stub_dm_spawn_state *sdss)
  {
      STATE_AO_GC(sdss->dm.spawn.ao);
-@@ -828,10 +838,14 @@ void libxl__spawn_stub_dm(libxl__egc *eg
+@@ -828,10 +840,14 @@ void libxl__spawn_stub_dm(libxl__egc *eg
      libxl__domain_build_state *const d_state = sdss->dm.build_state;
      libxl__domain_build_state *const stubdom_state = &sdss->dm_state;
  
@@ -100,7 +100,7 @@ Index: xen-4.3.4/tools/libxl/libxl_dm.c
      }
  
      sdss->pvqemu.guest_domid = 0;
-@@ -848,7 +862,16 @@ void libxl__spawn_stub_dm(libxl__egc *eg
+@@ -848,7 +864,16 @@ void libxl__spawn_stub_dm(libxl__egc *eg
      libxl_domain_build_info_init_type(&dm_config->b_info, LIBXL_DOMAIN_TYPE_PV);
  
      dm_config->b_info.max_vcpus = 1;
@@ -118,7 +118,7 @@ Index: xen-4.3.4/tools/libxl/libxl_dm.c
      dm_config->b_info.target_memkb = dm_config->b_info.max_memkb;
  
      dm_config->b_info.u.pv.features = "";
-@@ -882,10 +905,28 @@ void libxl__spawn_stub_dm(libxl__egc *eg
+@@ -882,10 +907,28 @@ void libxl__spawn_stub_dm(libxl__egc *eg
      dm_config->vkbs = vkb;
      dm_config->num_vkbs = 1;
  
@@ -151,24 +151,24 @@ Index: xen-4.3.4/tools/libxl/libxl_dm.c
  
      /* fixme: this function can leak the stubdom if it fails */
      ret = libxl__domain_make(gc, &dm_config->c_info, &sdss->pvqemu.guest_domid);
-@@ -903,7 +944,16 @@ void libxl__spawn_stub_dm(libxl__egc *eg
+@@ -903,7 +946,15 @@ void libxl__spawn_stub_dm(libxl__egc *eg
          goto out;
      }
  
+-    libxl__write_stub_dmargs(gc, dm_domid, guest_domid, args);
 +    libxl__store_libxl_entry(gc, guest_domid, "dm-version",
 +                                  libxl_device_model_version_to_string(dm_config->b_info.device_model_version));
 +    libxl__store_libxl_entry(gc, dm_domid, "stubdom-version",
 +                             libxl_stubdomain_version_to_string(guest_config->b_info.stubdomain_version));
-     libxl__write_stub_dmargs(gc, dm_domid, guest_domid, args);
-+    //    libxl__write_stub_dmargs(gc, dm_domid, guest_domid, args,
-+    //                         guest_config->b_info.stubdomain_version == LIBXL_STUBDOMAIN_VERSION_LINUX);
++    libxl__write_stub_dmargs(gc, dm_domid, guest_domid, args,
++                             guest_config->b_info.stubdomain_version == LIBXL_STUBDOMAIN_VERSION_LINUX);
 +    libxl__xs_write(gc, XBT_NULL,
 +                    libxl__sprintf(gc, "%s/image/device-model-domid",
 +                                   libxl__xs_get_dompath(gc, guest_domid)), "%d", dm_domid);
      libxl__xs_write(gc, XBT_NULL,
                     libxl__sprintf(gc, "%s/image/device-model-domid",
                                    libxl__xs_get_dompath(gc, guest_domid)),
-@@ -911,7 +961,17 @@ void libxl__spawn_stub_dm(libxl__egc *eg
+@@ -911,7 +962,17 @@ void libxl__spawn_stub_dm(libxl__egc *eg
      libxl__xs_write(gc, XBT_NULL,
                     libxl__sprintf(gc, "%s/target",
                                    libxl__xs_get_dompath(gc, dm_domid)),
@@ -187,7 +187,7 @@ Index: xen-4.3.4/tools/libxl/libxl_dm.c
      ret = xc_domain_set_target(ctx->xch, dm_domid, guest_domid);
      if (ret<0) {
          LIBXL__LOG_ERRNO(ctx, LIBXL__LOG_ERROR,
-@@ -939,6 +999,10 @@ retry_transaction:
+@@ -939,6 +1000,10 @@ retry_transaction:
  
      libxl__multidev_begin(ao, &sdss->multidev);
      sdss->multidev.callback = spawn_stub_launch_dm;
@@ -197,6 +197,14 @@ Index: xen-4.3.4/tools/libxl/libxl_dm.c
 +    //}
      libxl__add_disks(egc, ao, dm_domid, dm_config, &sdss->multidev);
      libxl__multidev_prepared(egc, &sdss->multidev, 0);
+ 
+@@ -954,7 +1019,6 @@ static void spawn_stub_launch_dm(libxl__
+ {
+     libxl__stub_dm_spawn_state *sdss = CONTAINER_OF(multidev, *sdss, multidev);
+     STATE_AO_GC(sdss->dm.spawn.ao);
+-    libxl_ctx *ctx = libxl__gc_owner(gc);
+     int i, num_console = STUBDOM_SPECIAL_CONSOLES;
+     libxl__device_console *console;
  
 @@ -987,6 +1051,11 @@ static void spawn_stub_launch_dm(libxl__
      if (ret)
@@ -210,8 +218,26 @@ Index: xen-4.3.4/tools/libxl/libxl_dm.c
      if (guest_config->b_info.u.hvm.serial)
          num_console++;
  
-@@ -1014,14 +1083,19 @@ static void spawn_stub_launch_dm(libxl__
-                 free(filename);
+@@ -998,30 +1067,29 @@ static void spawn_stub_launch_dm(libxl__
+ 
+     for (i = 0; i < num_console; i++) {
+         console[i].devid = i;
+-        console[i].consback = LIBXL__CONSOLE_BACKEND_IOEMU;
++        console[i].consback = LIBXL__CONSOLE_BACKEND_XENCONSOLED;
+         /* STUBDOM_CONSOLE_LOGGING (console 0) is for minios logging
+          * STUBDOM_CONSOLE_SAVE (console 1) is for writing the save file
+          * STUBDOM_CONSOLE_RESTORE (console 2) is for reading the save file
+          */
+         switch (i) {
+-            char *filename;
+-            char *name;
+             case STUBDOM_CONSOLE_LOGGING:
+-                name = libxl__sprintf(gc, "qemu-dm-%s",
+-                                      libxl_domid_to_name(ctx, guest_domid));
+-                libxl_create_logfile(ctx, name, &filename);
+-                console[i].output = libxl__sprintf(gc, "file:%s", filename);
+-                free(filename);
++                console[i].output = "pty";
                  break;
              case STUBDOM_CONSOLE_SAVE:
 -                console[i].output = libxl__sprintf(gc, "file:%s",
